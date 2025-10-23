@@ -219,18 +219,25 @@
         let editingIndex = -1;
         let items = [];
 
-        // Función para crear copos de nieve
+
+        // ❌ Efecto de nieve desactivado
+        /*
         function createSnowflake() {
-            const snowflake = document.createElement('div');
-            snowflake.className = 'snowflake';
-            snowflake.textContent = '❄';
-            snowflake.style.left = Math.random() * 100 + 'vw';
-            snowflake.style.animationDuration = Math.random() * 3 + 2 + 's';
-            snowflake.style.fontSize = Math.random() * 1.5 + 0.5 + 'em';
-            document.getElementById('snow-container').appendChild(snowflake);
-            setTimeout(() => snowflake.remove(), 5000);
-        }
+        const snowflake = document.createElement('div');
+        snowflake.className = 'snowflake';
+        snowflake.textContent = '❄';
+        snowflake.style.left = Math.random() * 100 + 'vw';
+        snowflake.style.animationDuration = Math.random() * 3 + 2 + 's';
+        snowflake.style.fontSize = Math.random() * 1.5 + 0.5 + 'em';
+        document.getElementById('snow-container').appendChild(snowflake);
+        setTimeout(() => snowflake.remove(), 5000);
+}
         setInterval(createSnowflake, 200);
+*/
+
+
+        // Función para crear copos de nieve
+
 
         // Cargar items desde Supabase
         async function loadItems() {
