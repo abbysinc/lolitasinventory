@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOLITAS INVENTORY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Playfair Display', serif;
+            background: linear-gradient(135deg, #000000, #1a1a1a);
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            position: relative;
+        }
+        h1 {
+            text-align: center;
+            font-size: 3em;
+            font-family: 'Dancing Script', cursive;
+            text-shadow: 0 0 20px #ff69b4, 0 0 40px #ff69b4, 0 0 60px #ff69b4;
+            margin: 20px 0;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        @keyframes glow {
+            from { text-shadow: 0 0 20px #ff69b4; }
+            to { text-shadow: 0 0 30px #ff69b4, 0 0 40px #ff69b4; }
+        }
+        .inventory-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .item-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #ff69b4;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+        }
+        .item-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.8);
+        }
+        .item-card img {
+            max-width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+        .item-card h3 {
+            font-family: 'Dancing Script', cursive;
+            margin: 0;
+            color: #ff69b4;
+        }
+        .item-card p {
+            margin: 5px 0;
+        }
+        .item-buttons {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+        .item-buttons button {
+            background: #ff69b4;
+            border: none;
+            border-radius: 10px;
+            padding: 5px 10px;
+            cursor: pointer;
+            color: #fff;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+        .item-buttons button:hover {
+            background: #ffb6c1;
+        }
+        .add-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #ff69b4, #ffb6c1);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(255, 105, 180, 0.8);
+            transition: transform 0.3s;
+            font-size: 24px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1001;
+        }
+        .add-button:hover {
+            transform: scale(1.1);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: #222;
+            padding: 20px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.8);
+        }
+        .modal-content h2 {
+            text-align: center;
+            color: #ff69b4;
+            font-family: 'Dancing Script', cursive;
+        }
+        .modal-content input, .modal-content button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ff69b4;
+            border-radius: 10px;
+            background: #333;
+            color: #fff;
+        }
+        .modal-content button {
+            background: #ff69b4;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .modal-content button:hover {
+            background: #ffb6c1;
+        }
+        input[type="file"]::file-selector-button {
+            border-radius: 10px;
+            background: #ff69b4;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        input[type="file"]::file-selector-button:hover {
+            background: #ffb6c1;
+        }
+        /* Animación de nieve */
+        .snowflake {
+            position: absolute;
+            top: -10px;
+            color: #fff;
+            font-size: 1em;
+            pointer-events: none;
+            animation: fall linear infinite;
+            z-index: 999;
+        }
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        @media (max-width: 768px) {
+            .inventory-container {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                padding: 10px;
+            }
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="snow-container"></div>
+    <h1>LOLITAS INVENTORY</h1>
+    <div class="inventory-container" id="inventory"></div>
+    <button class="add-button" onclick="openModal()">+</button>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h2 id="modal-title">Agregar Item</h2>
+            <input type="text" id="item-code" placeholder="Código del Producto" required>
+            <input type="text" id="item-name" placeholder="Nombre" required>
+            <input type="number" id="item-quantity" placeholder="Cantidad" required>
+            <input type="number" step="0.01" id="item-price" placeholder="Precio de Compra" required>
+            <input type="number" step="0.01" id="item-sale-price" placeholder="Precio de Venta" required>
+            <input type="file" id="item-image" accept="image/*">
+            <button onclick="saveItem()">Guardar</button>
+            <button onclick="closeModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        const inventory = document.getElementById('inventory');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        let editingIndex = -1;
+
+        // Función para crear copos de nieve
+        function createSnowflake() {
+            const snowflake = document.createElement('div');
+            snowflake.className = 'snowflake';
+            snowflake.textContent = '❄';
+            snowflake.style.left = Math.random() * 100 + 'vw';
+            snowflake.style.animationDuration = Math.random() * 3 + 2 + 's'; // Entre 2 y 5 segundos
+            snowflake.style.fontSize = Math.random() * 1.5 + 0.5 + 'em'; // Tamaño variable
+            document.getElementById('snow-container').appendChild(snowflake);
+
+            // Remover el copo después de la animación
+            setTimeout(() => {
+                snowflake.remove();
+            }, 5000);
+        }
+
+        // Generar copos de nieve cada cierto tiempo
+        setInterval(createSnowflake, 200); // Un copo cada 200ms
+
+        // Cargar items desde localStorage
+        function loadItems() {
+            const items = JSON.parse(localStorage.getItem('lolitasInventory')) || [];
+            inventory.innerHTML = '';
+            items.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'item-card';
+                card.innerHTML = `
+                    ${item.image ? `<img src="${item.image}" alt="${item.name}">` : ''}
+                    <h3>${item.name}</h3>
+                    <p>Código: ${item.code}</p>
+                    <p>Cantidad: ${item.quantity}</p>
+                    <p>Precio Compra: $${item.price}</p>
+                    <p>Precio Venta: $${item.salePrice}</p>
+                    <div class="item-buttons">
+                        <button onclick="editItem(${index})">Editar</button>
+                        <button onclick="deleteItem(${index})">Eliminar</button>
+                    </div>
+                `;
+                inventory.appendChild(card);
+            });
+        }
+
+        // Abrir modal para agregar
+        function openModal() {
+            modalTitle.textContent = 'Agregar Item';
+            editingIndex = -1;
+            clearModal();
+            modal.style.display = 'flex';
+        }
+
+        // Cerrar modal
+        function closeModal() {
+            modal.style.display = 'none';
+            clearModal();
+        }
+
+        // Limpiar modal
+        function clearModal() {
+            document.getElementById('item-code').value = '';
+            document.getElementById('item-name').value = '';
+            document.getElementById('item-quantity').value = '';
+            document.getElementById('item-price').value = '';
+            document.getElementById('item-sale-price').value = '';
+            document.getElementById('item-image').value = '';
+        }
+
+        // Editar item
+        function editItem(index) {
+            const items = JSON.parse(localStorage.getItem('lolitasInventory')) || [];
+            const item = items[index];
+            document.getElementById('item-code').value = item.code;
+            document.getElementById('item-name').value = item.name;
+            document.getElementById('item-quantity').value = item.quantity;
+            document.getElementById('item-price').value = item.price;
+            document.getElementById('item-sale-price').value = item.salePrice;
+            // Nota: La imagen no se puede prellenar fácilmente, pero se puede cambiar
+            modalTitle.textContent = 'Editar Item';
+            editingIndex = index;
+            modal.style.display = 'flex';
+        }
+
+        // Eliminar item
+        function deleteItem(index) {
+            if (confirm('¿Estás seguro de que quieres eliminar este item?')) {
+                const items = JSON.parse(localStorage.getItem('lolitasInventory')) || [];
+                items.splice(index, 1);
+                localStorage.setItem('lolitasInventory', JSON.stringify(items));
+                loadItems();
+            }
+        }
+
+        // Guardar item (agregar o editar)
+        function saveItem() {
+            const code = document.getElementById('item-code').value.trim();
+            const name = document.getElementById('item-name').value.trim();
+            const quantity = document.getElementById('item-quantity').value;
+            const price = document.getElementById('item-price').value;
+            const salePrice = document.getElementById('item-sale-price').value;
+            const imageFile = document.getElementById('item-image').files[0];
+
+            if (!code || !name || !quantity || !price || !salePrice) {
+                alert('Por favor, completa todos los campos obligatorios.');
+                return;
+            }
+
+            const items = JSON.parse(localStorage.getItem('lolitasInventory')) || [];
+
+            let imageData = editingIndex >= 0 ? items[editingIndex].image : null;
+            if (imageFile) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imageData = e.target.result;
+                    finalizeSave(code, name, quantity, price, salePrice, imageData);
+                };
+                reader.readAsDataURL(imageFile);
+            } else {
+                finalizeSave(code, name, quantity, price, salePrice, imageData);
+            }
+        }
+
+        function finalizeSave(code, name, quantity, price, salePrice, image) {
+            const items = JSON.parse(localStorage.getItem('lolitasInventory')) || [];
+            const item = { code, name, quantity, price, salePrice, image };
+            if (editingIndex >= 0) {
+                items[editingIndex] = item;
+            } else {
+                items.push(item);
+            }
+            localStorage.setItem('lolitasInventory', JSON.stringify(items));
+            loadItems();
+            closeModal();
+        }
+
+        // Cargar items al iniciar
+        loadItems();
+    </script>
+</body>
+</html>
