@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LOLITAS INVENTORY</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body {
             font-family: 'Playfair Display', serif;
@@ -206,10 +208,16 @@
     </div>
 
     <script>
+        // Configuración de Supabase (REEMPLAZA CON TUS CREDENCIALES)
+        const supabaseUrl = 'https://uwjmivcknfaejxebupja.supabase.co'; // Ej: https://xyz.supabase.co
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV3am1pdmNrbmZhZWp4ZWJ1cGphIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExNjUzMzEsImV4cCI6MjA3Njc0MTMzMX0.zD0lUAJNSdDDmj5XLhlLn33bBFFOZbJuLOWDcxucEmo';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
         const inventory = document.getElementById('inventory');
         const modal = document.getElementById('modal');
         const modalTitle = document.getElementById('modal-title');
         let editingIndex = -1;
+        let items = [];
 
         // Función para crear copos de nieve
         function createSnowflake() {
@@ -217,22 +225,28 @@
             snowflake.className = 'snowflake';
             snowflake.textContent = '❄';
             snowflake.style.left = Math.random() * 100 + 'vw';
-            snowflake.style.animationDuration = Math.random() * 3 + 2 + 's'; // Entre 2 y 5 segundos
-            snowflake.style.fontSize = Math.random() * 1.5 + 0.5 + 'em'; // Tamaño variable
+            snowflake.style.animationDuration = Math.random() * 3 + 2 + 's';
+            snowflake.style.fontSize = Math.random() * 1.5 + 0.5 + 'em';
             document.getElementById('snow-container').appendChild(snowflake);
+            setTimeout(() => snowflake.remove(), 5000);
+        }
+        setInterval(createSnowflake, 200);
 
-            // Remover el copo después de la animación
-            setTimeout(() => {
-                snowflake.remove();
-            }, 5000);
+        // Cargar items desde Supabase
+        async function loadItems() {
+            try {
+                const { data, error } = await supabase.from('items').select('*');
+                if (error) throw error;
+                items = data || [];
+                renderItems();
+            } catch (error) {
+                console.error("Error cargando items:", error);
+                alert("Error al cargar datos. Verifica tu conexión a internet y configuración de Supabase.");
+            }
         }
 
-        // Generar copos de nieve cada cierto tiempo
-        setInterval(createSnowflake, 200); // Un copo cada 200ms
-
-        // Cargar items desde localStorage
-        function loadItems() {
-            const items = JSON.parse(localStorage.getItem('lolitasInventory')) || [];
+        // Renderizar items en el DOM
+        function renderItems() {
             inventory.innerHTML = '';
             items.forEach((item, index) => {
                 const card = document.createElement('div');
@@ -243,10 +257,10 @@
                     <p>Código: ${item.code}</p>
                     <p>Cantidad: ${item.quantity}</p>
                     <p>Precio Compra: $${item.price}</p>
-                    <p>Precio Venta: $${item.salePrice}</p>
+                    <p>Precio Venta: $${item.sale_price}</p>
                     <div class="item-buttons">
                         <button onclick="editItem(${index})">Editar</button>
-                        <button onclick="deleteItem(${index})">Eliminar</button>
+                        <button onclick="deleteItem(${item.id})">Eliminar</button>
                     </div>
                 `;
                 inventory.appendChild(card);
@@ -279,31 +293,33 @@
 
         // Editar item
         function editItem(index) {
-            const items = JSON.parse(localStorage.getItem('lolitasInventory')) || [];
             const item = items[index];
             document.getElementById('item-code').value = item.code;
             document.getElementById('item-name').value = item.name;
             document.getElementById('item-quantity').value = item.quantity;
             document.getElementById('item-price').value = item.price;
-            document.getElementById('item-sale-price').value = item.salePrice;
-            // Nota: La imagen no se puede prellenar fácilmente, pero se puede cambiar
+            document.getElementById('item-sale-price').value = item.sale_price;
             modalTitle.textContent = 'Editar Item';
             editingIndex = index;
             modal.style.display = 'flex';
         }
 
         // Eliminar item
-        function deleteItem(index) {
+        async function deleteItem(id) {
             if (confirm('¿Estás seguro de que quieres eliminar este item?')) {
-                const items = JSON.parse(localStorage.getItem('lolitasInventory')) || [];
-                items.splice(index, 1);
-                localStorage.setItem('lolitasInventory', JSON.stringify(items));
-                loadItems();
+                try {
+                    const { error } = await supabase.from('items').delete().eq('id', id);
+                    if (error) throw error;
+                    loadItems();
+                } catch (error) {
+                    console.error("Error eliminando item:", error);
+                    alert("Error al eliminar. Intenta de nuevo.");
+                }
             }
         }
 
         // Guardar item (agregar o editar)
-        function saveItem() {
+        async function saveItem() {
             const code = document.getElementById('item-code').value.trim();
             const name = document.getElementById('item-name').value.trim();
             const quantity = document.getElementById('item-quantity').value;
@@ -315,8 +331,6 @@
                 alert('Por favor, completa todos los campos obligatorios.');
                 return;
             }
-
-            const items = JSON.parse(localStorage.getItem('lolitasInventory')) || [];
 
             let imageData = editingIndex >= 0 ? items[editingIndex].image : null;
             if (imageFile) {
@@ -331,17 +345,22 @@
             }
         }
 
-        function finalizeSave(code, name, quantity, price, salePrice, image) {
-            const items = JSON.parse(localStorage.getItem('lolitasInventory')) || [];
-            const item = { code, name, quantity, price, salePrice, image };
-            if (editingIndex >= 0) {
-                items[editingIndex] = item;
-            } else {
-                items.push(item);
+        async function finalizeSave(code, name, quantity, price, salePrice, image) {
+            try {
+                const itemData = { code, name, quantity: parseInt(quantity), price: parseFloat(price), sale_price: parseFloat(salePrice), image };
+                if (editingIndex >= 0) {
+                    const { error } = await supabase.from('items').update(itemData).eq('id', items[editingIndex].id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabase.from('items').insert([itemData]);
+                    if (error) throw error;
+                }
+                loadItems();
+                closeModal();
+            } catch (error) {
+                console.error("Error guardando item:", error);
+                alert("Error al guardar. Verifica tu conexión y configuración de Supabase.");
             }
-            localStorage.setItem('lolitasInventory', JSON.stringify(items));
-            loadItems();
-            closeModal();
         }
 
         // Cargar items al iniciar
